@@ -6,3 +6,30 @@ The second option tries to solve this problem by making an extra query for each 
 
 **This project solves both issues efficiently and even makes it unnecessary to map database responses to objects. It compiles SQL queries that use built-in database functions to aggregate your data to JSON strings directly on the upstream database.** The responses are scalar, meaning they only contain a single row and column called `_json`.
 
+## Install
+
+```sh
+$ npm install upstream-json-aggregate
+```
+
+## Supported Databases
+- [x] MySQL
+- [x] MariaDB
+- [ ] PostgreSQL
+
+## Features
+- [x] JIT and AOT compiling possible
+- [x] Compiling is compatible with prepared statements/parameterized queries
+- [x] (Nested) JSON array aggregation of tables
+- [x] (Nested) JSON object aggregation of a single row
+- [x] WHERE conditions
+- [x] Pagination via limit and offset parameters
+- [x] Ordering of array elements
+- [x] Calculated fields that can use all built-in functions
+- [ ] Calculated fields that can use all built-in aggregate functions (e.g. grouping by a column)
+
+## Todo
+- [ ] Write docstrings
+- [ ] Write tests
+- [ ] Write examples (also with prepared statements/parameters)
+- [ ] Publish to npm
