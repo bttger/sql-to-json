@@ -1,0 +1,40 @@
+{
+  "name": "upstream-json-aggregate",
+  "version": "0.1.0",
+  "description": "Aggregate your data to JSON directly on the upstream database and prevent issues like the Cartesian product or N+1 queries",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepublish": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/findtechjobs/upstream-json-aggregate.git"
+  },
+  "keywords": [
+    "aggregate",
+    "map",
+    "rows",
+    "json",
+    "relational",
+    "database",
+    "cartesian-product",
+    "N+1",
+    "queries",
+    "sql",
+    "mysql",
+    "postgres",
+    "mariadb",
+    "orm"
+  ],
+  "author": "Tom Böttger <tom@findtech.jobs>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/findtechjobs/upstream-json-aggregate/issues"
+  },
+  "homepage": "https://github.com/findtechjobs/upstream-json-aggregate#readme",
+  "devDependencies": {
+    "typescript": "^4.7.3"
+  }
+}
