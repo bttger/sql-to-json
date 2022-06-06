@@ -1,3 +1,6 @@
+type JsonQuery = string;
+type KeyName = string;
+
 /**
  * See the following two convenience functions for usage info:
  * - getJsonObj => string
@@ -7,8 +10,8 @@ function getScalarJsonQuery(
   objectOrArray: "object" | "array",
   table: TableName,
   selections: (ColumnName | [KeyName, JsonQuery])[],
-  where: Conditions,
-  ...innerJoins: [TableName, Conditions][]
+  where: SqlConditions,
+  ...innerJoins: [TableName, SqlConditions][]
 ): JsonQuery {
   // Map all column selections to a string array
   const mappedSelections: string[] = [];
@@ -66,8 +69,8 @@ function getScalarJsonQuery(
 function getJsonObj(
   table: TableName,
   selections: (ColumnName | [KeyName, JsonQuery])[],
-  where: Conditions,
-  ...innerJoins: [TableName, Conditions][]
+  where: SqlConditions,
+  ...innerJoins: [TableName, SqlConditions][]
 ): JsonQuery {
   return getScalarJsonQuery("object", table, selections, where, ...innerJoins);
 }
@@ -92,8 +95,8 @@ function getJsonObj(
 function getJsonArr(
   table: TableName,
   selections: (ColumnName | [KeyName, JsonQuery])[],
-  where: Conditions,
-  ...innerJoins: [TableName, Conditions][]
+  where: SqlConditions,
+  ...innerJoins: [TableName, SqlConditions][]
 ): JsonQuery {
   return getScalarJsonQuery("array", table, selections, where, ...innerJoins);
 }

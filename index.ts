@@ -1,8 +1,6 @@
-type JsonQuery = string;
 type TableName = string;
 type ColumnName = string;
-type KeyName = string;
-type Conditions = string;
+type SqlConditions = string;
 type JsonKeyName = string;
 type Limit = number;
 type Offset = number;
@@ -18,7 +16,7 @@ interface OrderBy {
 }
 
 interface QueryOptions {
-  where?: Conditions;
+  where?: SqlConditions;
   // Needed for many-to-many relations
   join?: TableName | TableName[];
   limit?: Limit;
@@ -44,7 +42,7 @@ class JsonQueryNode {
     private tableSelection: TableSelection,
     private columnSelections: ColumnSelection[],
     private joinedTables?: JsonQueryNode[],
-    private where?: Conditions,
+    private where?: SqlConditions,
     private join?: TableName[],
     private limit?: Limit,
     private offset?: Offset,
@@ -55,7 +53,7 @@ class JsonQueryNode {
     // Compiled SQL query
     let output: string;
 
-    let tableName: string = Array.isArray(this.tableSelection)
+    const tableName: string = Array.isArray(this.tableSelection)
       ? this.tableSelection[0]
       : this.tableSelection;
 
@@ -159,7 +157,7 @@ class JsonQueryNode {
 function find(
   table: TableSelection,
   select: ColumnSelection[],
-  where: Conditions,
+  where: SqlConditions,
   join?: JsonQueryNode[]
 ): JsonQueryNode {
   return new JsonQueryNode(QueryNodeType.Object, table, select, join, where);
