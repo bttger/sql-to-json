@@ -49,7 +49,7 @@ class JsonQueryNode {
     private orderBy?: OrderBy | OrderBy[]
   ) {}
 
-  compile(): string {
+  public compile(): string {
     const tableName: string = Array.isArray(this.tableSelection)
       ? this.tableSelection[0]
       : this.tableSelection;
