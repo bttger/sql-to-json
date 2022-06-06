@@ -1,7 +1,7 @@
 {
-  "name": "upstream-json-aggregate",
+  "name": "sql-to-json",
   "version": "0.1.0",
-  "description": "Aggregate your data to JSON directly on the upstream database and prevent issues like the Cartesian product or N+1 queries",
+  "description": "Simple SQL query builder that directly maps your data to JSON on the upstream database. Can provide orders of magnitude better performance compared to standard joins or N+1 queries.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
@@ -31,15 +31,17 @@
   "author": "Tom Böttger <tom@findtech.jobs>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/findtechjobs/upstream-json-aggregate/issues"
+    "url": "https://github.com/findtechjobs/sql-to-json/issues"
   },
-  "homepage": "https://github.com/findtechjobs/upstream-json-aggregate#readme",
+  "homepage": "https://github.com/findtechjobs/sql-to-json",
   "devDependencies": {
+    "@types/node": "^17.0.40",
     "@typescript-eslint/eslint-plugin": "^5.27.0",
     "@typescript-eslint/parser": "^5.27.0",
     "eslint": "^8.17.0",
     "eslint-config-prettier": "^8.5.0",
     "prettier": "2.6.2",
+    "ts-node": "^10.8.1",
     "typescript": "^4.7.3"
   }
 }
