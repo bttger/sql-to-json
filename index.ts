@@ -50,9 +50,6 @@ class JsonQueryNode {
   ) {}
 
   compile(): string {
-    // Compiled SQL query
-    let output: string;
-
     const tableName: string = Array.isArray(this.tableSelection)
       ? this.tableSelection[0]
       : this.tableSelection;
@@ -105,7 +102,7 @@ class JsonQueryNode {
 
     if (this.type === QueryNodeType.Object) {
       // Building a scalar JSON object query
-      output = `SELECT JSON_OBJECT(${assembledColumnSelections.join(
+      return `SELECT JSON_OBJECT(${assembledColumnSelections.join(
         ", "
       )}) as _json FROM (SELECT * FROM ${tableName} WHERE ${
         this.where
@@ -139,13 +136,12 @@ class JsonQueryNode {
 
       // Need to cast the second COALESCE parameter due to implicit type conversion
       // https://stackoverflow.com/a/20678157/11858359
-      output = `SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT(${assembledColumnSelections.join(
+      return `SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT(${assembledColumnSelections.join(
         ", "
       )})), CAST("[]" AS JSON)) as _json FROM (SELECT * FROM ${tables} ${where} ${orderBy} ${limit}) AS ${tableName} ${descendantsOutput.join(
         " "
       )}`;
     }
-    return output;
   }
 }
 
