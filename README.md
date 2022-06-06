@@ -20,8 +20,7 @@ The second option tries to solve this problem by making an extra query for each 
 - [ ] GROUP BY and HAVING conditions (See the [RFC](./rfc/group-by-and-having-support.md))
 
 ## Supported Databases
-- [x] MySQL
-- [x] MariaDB
+- [x] MySQL (>=8.0.14; MariaDB is not supported due to lack of lateral joins)
 - [ ] PostgreSQL
 - [ ] CockroachDB
 
