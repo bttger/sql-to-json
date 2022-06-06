@@ -12,21 +12,24 @@ The second option tries to solve this problem by making an extra query for each 
 $ npm install upstream-json-aggregate
 ```
 
+## Features
+- [x] Simple, structured query building (exports only two functions)
+- [x] Compiles efficient scalar SQL queries for you that return a JSON string when executed
+- [x] Can be used as JIT or AOT compiler in your API server
+- [x] Supports prepared statements (by maintaining the parameter order)
+- [x] (Nested) JSON array aggregation of tables
+- [x] (Nested) JSON object building of a single row
+- [x] WHERE conditions
+- [x] ORDER BY of array items
+- [x] Pagination via limit and offset parameters
+- [x] Calculated fields that can use all built-in functions
+- [ ] Calculated fields that can use all built-in aggregate functions (e.g. grouping by a column)
+
 ## Supported Databases
 - [x] MySQL
 - [x] MariaDB
 - [ ] PostgreSQL
-
-## Features
-- [x] JIT and AOT compiling possible
-- [x] Compiling is compatible with prepared statements/parameterized queries
-- [x] (Nested) JSON array aggregation of tables
-- [x] (Nested) JSON object aggregation of a single row
-- [x] WHERE conditions
-- [x] Pagination via limit and offset parameters
-- [x] Ordering of array elements
-- [x] Calculated fields that can use all built-in functions
-- [ ] Calculated fields that can use all built-in aggregate functions (e.g. grouping by a column)
+- [ ] CockroachDB
 
 ## Todo
 - [ ] Write docstrings
