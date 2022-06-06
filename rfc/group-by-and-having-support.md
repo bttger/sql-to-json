@@ -1,0 +1,9 @@
+# GROUP BY and HAVING support - RFC
+
+This feature could be quite difficult to find a clean interface for. Currently, users can use calculated fields to use aggregation functions (and essentially group the whole table). The problem is that all selected columns must be functionally dependent on the column that is used for the aggregation. This problem would stay if we just introduce a `groupBy` and `having` parameter. 
+
+Maybe a solution could be to make extra scalar queries for aggregated columns and map the results to some wrapper object. This wrapper object could consist of an `aggregates` (object consisting of each aggregate selection) and an `items` (array) property.
+
+Or we introduce a third function to our library, something called `aggregate(table: TableSelection, select: ColumnSelection[], groupBy?: ColumnName[], having?: SqlConditions): JsonQueryNode`. Executing the compiled query would return a JSON array. If no `groupBy` parameter is supplied, the query groups the whole table to a single row. This would probably be the cleanest solutions since it doesn't change the existing API, is descriptive, and easy to comprehend that you get an array of objects with the selected columns as properties.
+
+Actually, the proposed `aggregate` interface is very similar to the `findMany` interface. Maybe we don't even need to introduce a new function and could just extend the `QueryOptions` interface by `groupBy?: ColumnName[]` and `having?: SqlConditions` properties. In that case, the documentation must make it very clear that selected columns must be functionally dependent on the aggregated columns whenever the `groupBy` option is provided.

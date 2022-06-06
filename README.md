@@ -22,8 +22,8 @@ $ npm install upstream-json-aggregate
 - [x] WHERE conditions
 - [x] ORDER BY of array items
 - [x] Pagination via limit and offset parameters
-- [x] Calculated fields that can use all built-in functions
-- [ ] Calculated fields that can use all built-in aggregate functions (e.g. grouping by a column)
+- [x] Calculated fields that can use all built-in functions (even window functions)
+- [ ] GROUP BY and HAVING conditions (See the [RFC](./rfc/group-by-and-having-support.md))
 
 ## Supported Databases
 - [x] MySQL
