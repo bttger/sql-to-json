@@ -43,7 +43,7 @@ class JsonQueryNode {
     private columnSelections: ColumnSelection[],
     private joinedTables?: JsonQueryNode[],
     private where?: SqlConditions,
-    private join?: TableName[],
+    private join?: TableName | TableName[],
     private limit?: Limit,
     private offset?: Offset,
     private orderBy?: OrderBy | OrderBy[]
@@ -58,8 +58,8 @@ class JsonQueryNode {
       : this.tableSelection;
 
     // Assembled from the `columnSelections` and the `joinedTables`
-    let assembledColumnSelections: string[] = this.columnSelections.flatMap(
-      (columnSelection) => {
+    const assembledColumnSelections: string[] = this.columnSelections.flatMap(
+      (columnSelection: ColumnSelection) => {
         if (Array.isArray(columnSelection)) {
           // JSON key name provided
           if (columnSelection.length === 2) {
@@ -154,7 +154,7 @@ class JsonQueryNode {
  * applied, dann werden mehrere rows zurückgegeben welche alle jeweils ein
  * JSON object string darstellen) => kann die query failen wenns ne nested node ist
  */
-function find(
+export function find(
   table: TableSelection,
   select: ColumnSelection[],
   where: SqlConditions,
@@ -167,24 +167,24 @@ function find(
  * The `where` parameter is used for joining the related rows (like in the
  * `ON` condition) and for arbitrary `WHERE` conditions.
  */
-function findMany(
+export function findMany(
   table: TableSelection,
   select: ColumnSelection[],
   join?: JsonQueryNode[]
 ): JsonQueryNode;
-function findMany(
+export function findMany(
   table: TableSelection,
   select: ColumnSelection[],
   options: QueryOptions,
   join?: JsonQueryNode[]
 ): JsonQueryNode;
-function findMany(
+export function findMany(
   table: TableSelection,
   select: ColumnSelection[],
-  optionsOrJoin?: any,
+  optionsOrJoin?: QueryOptions | JsonQueryNode[],
   join?: JsonQueryNode[]
 ): JsonQueryNode {
-  if (optionsOrJoin === undefined) {
+  if (optionsOrJoin === undefined && join === undefined) {
     return new JsonQueryNode(QueryNodeType.Array, table, select);
   }
   if (Array.isArray(optionsOrJoin)) {
