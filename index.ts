@@ -2,17 +2,11 @@ type TableName = string;
 type ColumnName = string;
 type SqlConditions = string;
 type JsonKeyName = string;
-type Limit = number;
-type Offset = number;
+type OrderBy = Record<ColumnName, "ASC" | "DESC">;
 
 enum QueryNodeType {
   Array,
   Object,
-}
-
-interface OrderBy {
-  column: ColumnName;
-  order: "ASC" | "DESC";
 }
 
 interface QueryOptions {
@@ -22,22 +16,39 @@ interface QueryOptions {
    * table of a many-to-many relation.
    */
   join?: TableName | TableName[];
-  limit?: Limit;
-  offset?: Offset;
-  orderBy?: OrderBy | OrderBy[];
+  limit?: number;
+  offset?: number;
+  orderBy?: OrderBy;
 }
 
-/**
- * Can access all columns of table and use all built-in database functions.
- * Should reference columns via the table name to prevent ambiguous column names.
- */
-type CalculatedField = string;
+interface TableSelectionConfig {
+  table: TableName;
+  jsonKey: JsonKeyName;
+}
+
+type TableSelection = TableName | TableSelectionConfig;
+
+interface ColumnSelectionConfig {
+  column: ColumnName;
+  jsonKey: JsonKeyName;
+}
+
+interface CalculatedFieldConfig {
+  jsonKey: JsonKeyName;
+  /**
+   * Should reference columns via the table name to prevent ambiguous column names.
+   */
+  referencedColumns: ColumnName[];
+  /**
+   * Can use all built-in database functions, including window functions.
+   */
+  calculation: string;
+}
 
 type ColumnSelection =
   | ColumnName
-  | [ColumnName, JsonKeyName]
-  | [ColumnName, JsonKeyName, CalculatedField];
-type TableSelection = TableName | [TableName, JsonKeyName];
+  | ColumnSelectionConfig
+  | CalculatedFieldConfig;
 
 class JsonQueryNode {
   constructor(
@@ -47,8 +58,8 @@ class JsonQueryNode {
     private joinedTables?: JsonQueryNode[],
     private where?: SqlConditions,
     private join?: TableName | TableName[],
-    private limit?: Limit,
-    private offset?: Offset,
+    private limit?: number,
+    private offset?: number,
     private orderBy?: OrderBy | OrderBy[]
   ) {}
 
@@ -210,3 +221,5 @@ export function findMany(
     optionsOrJoin?.orderBy
   );
 }
+
+findMany("dfks", [{ column: "df", jsonKey: "", calculation: "h" }]);

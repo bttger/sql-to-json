@@ -49,6 +49,7 @@ $ npm install sql-to-json
 - [ ] Allow selection junction table columns when joining a many-to-many relation
 - [ ] Fix calculated fields for columns that are not selected
 - [ ] orderby as record not as array
+- [ ] do i really need a lateral join inside of unique object? maybe i need it bc the object can lie within an array
 - [ ] Write docstrings
 - [ ] Write benchmarks
 - [ ] Write tests
