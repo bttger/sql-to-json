@@ -271,13 +271,62 @@ async function findUniqueSqlToJsonDepthTwo() {
   return rows[0]._json;
 }
 
+async function findManyPrismaDepthOne() {
+  return await prisma.film.findMany({
+    orderBy: { title: "asc" },
+    take: 200,
+    include: { film_actor: { include: { actor: {} } } },
+  });
+}
+
+const findManyQueryDepthOne = findMany(
+  ["film", "films"],
+  [
+    "film_id",
+    "title",
+    "description",
+    "release_year",
+    "language_id",
+    "original_language_id",
+    "rental_duration",
+    "rental_rate",
+    "length",
+    "replacement_cost",
+    "rating",
+    "special_features",
+    "last_update",
+  ],
+  { orderBy: { column: "title", order: "ASC" }, limit: 200 },
+  [
+    findMany(
+      ["actor", "actors"],
+      ["actor_id", "first_name", "last_name", "last_update"],
+      {
+        join: ["film_actor"],
+        where:
+          "film_actor.film_id = film.film_id AND film_actor.actor_id = actor.actor_id",
+      }
+    ),
+  ]
+).compile();
+
+console.log(findManyQueryDepthOne);
+
+async function findManySqlToJsonDepthOne() {
+  const storeId = Math.floor(Math.random() * 2) + 1;
+  const [rows] = await client.query(findManyQueryDepthOne, [storeId]);
+  return rows[0]._json;
+}
+
 const server = http.createServer(async (req, res) => {
   //const body = JSON.stringify(await findUniquePrisma());
   //const body = JSON.stringify(await findUniqueSqlToJson());
   //const body = JSON.stringify(await findUniquePrismaDepthOne());
   //const body = JSON.stringify(await findUniqueSqlToJsonDepthOne());
   //const body = JSON.stringify(await findUniquePrismaDepthTwo());
-  const body = JSON.stringify(await findUniqueSqlToJsonDepthTwo());
+  //const body = JSON.stringify(await findUniqueSqlToJsonDepthTwo());
+  const body = JSON.stringify(await findManyPrismaDepthOne());
+  //const body = JSON.stringify(await findManySqlToJsonDepthOne());
   res
     .writeHead(200, {
       "Content-Length": Buffer.byteLength(body),

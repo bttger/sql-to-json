@@ -49,7 +49,7 @@ Find a random unique customer and return it as JSON object string. See [here](ht
 
 ### Join depth of 1
 
-Find a random film store and return their customers and film inventory (limited to 50 entries).
+Find a random film store, their customers and film inventory (limited to 50 entries).
 
 ||Prisma|SQL-to-JSON|
 |---|---:|---:|
@@ -62,9 +62,22 @@ Find a random film store and return their customers and film inventory (limited 
 |CPU load node/RPS|1.39|0.06|
 |CPU load mysqld/RPS|0.83|0.43|
 
+Find 200 films and their actors.
+
+||Prisma|SQL-to-JSON|
+|---|---:|---:|
+|99th Percentile Latency (ms)|195|56|
+|Average Latency (ms)|120.59|33.99|
+|Standard Deviation Latency (ms)|33.32|7.03|
+|Average Requests per second|81.97|277.78|
+|CPU load node|270|92|
+|CPU load mysqld|68|334|
+|CPU load node/RPS|3.29|0.33|
+|CPU load mysqld/RPS|0.83|1.2|
+
 ### Join depth of 2
 
-Extend the previous case by also returning the film actors, film categories and last 10 customer payments.
+Find a random film store, their customers and their last 10 payments, film inventory, and the related film actors and film categories (limited to 50 entries). Probably a quite unrealistic case.
 
 ||Prisma|SQL-to-JSON|
 |---|---:|---:|
