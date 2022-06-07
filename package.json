@@ -1,7 +1,7 @@
 {
   "name": "sql-to-json",
   "version": "0.1.0",
-  "description": "Simple SQL query builder that directly maps your data to JSON on the upstream database. Can provide orders of magnitude better performance compared to standard joins or N+1 queries.",
+  "description": "Simple SQL query builder that directly maps your data to JSON on the upstream database. Can provide significant better performance compared to standard joins or N+1 queries.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

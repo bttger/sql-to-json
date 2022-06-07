@@ -32,13 +32,13 @@ The benchmarks in the following results were performed on a consumer laptop with
 
 The Prisma client is already very efficient since it makes multiple database queries for included relations. I know that other ORMs like TypeORM join tables in a single query when you specify relations in their respective `find()` method. For the cases that we test here, these type of queries would result in response times in the seconds range as explained in the readme.
 
-Database responses get deserialized to JavaScript objects both for Prisma and SQL-to-JSON. The objects get then serialized and written to the http response body.
+Database responses get deserialized to JavaScript objects both for Prisma and SQL-to-JSON. The objects then get serialized and written to the http response body.
 
 Please note that these benchmarks do not meet scientific standards. I'm happy for any contributions that improve the benchmarks, so feel free to open a pull request.
 
 ### Join depth of 0
 
-Find a random unique customer and return it as JSON object string.
+Find a random unique customer and return it as JSON object string. See [here](https://dev.mysql.com/doc/sakila/en/sakila-structure.html) for the database structure.
 
 ||Prisma|SQL-to-JSON|
 |---|---:|---:|
@@ -57,6 +57,10 @@ Find a random film store and return their customers and film inventory (limited 
 |Average Latency (ms)|38.54|8.65|
 |Standard Deviation Latency (ms)|8.34|2.84|
 |Average Requests per second|238.1|1063.83|
+|CPU load node|330|69|
+|CPU load mysqld|197|455|
+|CPU load node/RPS|1.39|0.06|
+|CPU load mysqld/RPS|0.83|0.43|
 
 ### Join depth of 2
 
