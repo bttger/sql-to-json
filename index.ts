@@ -150,7 +150,7 @@ class JsonQueryNode {
  * applied, dann werden mehrere rows zurückgegeben welche alle jeweils ein
  * JSON object string darstellen) => kann die query failen wenns ne nested node ist
  */
-export function find(
+export function findUnique(
   table: TableSelection,
   select: ColumnSelection[],
   where: SqlConditions,

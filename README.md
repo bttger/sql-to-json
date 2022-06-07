@@ -20,7 +20,7 @@ The second option tries to solve this problem by making an extra query for each 
 - [ ] GROUP BY and HAVING conditions (See the [RFC](./rfc/group-by-and-having-support.md))
 
 ## Drawbacks
-The database response contains only a single column (with column type JSON). You won't get type information about the columns that you have queried since they will be mapped to JSON. JSON doesn't specify all types that are available in modern DBMS (e.g. dates will be represented as strings).
+The database response contains only a single column (with column type JSON). You won't get type information about the columns that you have queried since they will be mapped to JSON. Modern DBMS support many more types than what JSON specifies. Thus, some columns will be converted to strings (e.g. dates).
 
 ## Supported Databases
 - [x] MySQL (>=8.0.14; MariaDB is not supported due to lack of lateral joins)

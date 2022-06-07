@@ -1,12 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 import mysql from "mysql2/promise";
-import { find, findMany } from "../dist/index.js";
+import { findUnique, findMany } from "../dist/index.js";
 
 const prisma = new PrismaClient();
 
 console.log(await prisma.customer.findUnique({ where: { customer_id: 15 } }));
 
-const sql = find(
+const sql = findUnique(
   "customer",
   [
     "customer_id",
