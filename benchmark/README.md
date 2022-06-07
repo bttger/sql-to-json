@@ -28,13 +28,13 @@ $ npx autocannon --renderStatusCodes -a 5000 -l http://localhost:7744
 
 ## Results
 
-The benchmarks in the following results were performed on a consumer laptop with a Ryzen 4500U processor and 20GB RAM. Please note that these benchmarks do not meet scientific standards. I'm happy for any contributions that improve the benchmarks, so feel free to open a pull request.
+The benchmarks in the following results were performed on a consumer laptop with a 6-core Ryzen 4500U processor and 20GB RAM. The SQL-to-JSON queries were executed with the [mysql2](https://www.npmjs.com/package/mysql2) client. Both the Prisma and mysql2 client were used with their default configuration. According to the Prisma docs, the client creates a connection pool with a size depending on my CPU-core count (`num_physical_cpus * 2 + 1`). The mysql2 client has a default pool size of 10. Please note that these benchmarks do not meet scientific standards. I'm happy for any contributions that improve the benchmarks, so feel free to open a pull request.
 
 Database responses get deserialized to JavaScript objects both for Prisma and SQL-to-JSON. The objects get then serialized and written to the http response body.
 
 ### findUnique()
 
-Find a unique customer and return it as JSON object string. The benchmark is divided into multiple join depths.
+Find a random unique customer and return it as JSON object string. The benchmark is divided into multiple join depths.
 
 #### Join depth of 0
 
@@ -49,10 +49,10 @@ Find a unique customer and return it as JSON object string. The benchmark is div
 
 ||Prisma|SQL-to-JSON|
 |---|---:|---:|
-|99th Percentile Latency (ms)|||
-|Average Latency (ms)|||
-|Standard Deviation Latency (ms)|||
-|Average Requests per second|||
+|99th Percentile Latency (ms)|56|17|
+|Average Latency (ms)|38.54|8.65|
+|Standard Deviation Latency (ms)|8.34|2.84|
+|Average Requests per second|238.1|1063.83|
 
 #### Join depth of 2
 
