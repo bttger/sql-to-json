@@ -17,7 +17,10 @@ interface OrderBy {
 
 interface QueryOptions {
   where?: SqlConditions;
-  // Needed for many-to-many relations
+  /**
+   * For example, you can add a junction table here if you want to query a
+   * table of a many-to-many relation.
+   */
   join?: TableName | TableName[];
   limit?: Limit;
   offset?: Offset;
@@ -54,21 +57,26 @@ class JsonQueryNode {
       ? this.tableSelection[0]
       : this.tableSelection;
 
-    // Assembled from the `columnSelections` and the `joinedTables`
-    const assembledColumnSelections: string[] = this.columnSelections.flatMap(
+    // ["<tableName>.<column>"]
+    const selectedColumns: string[] = [];
+
+    // Assemble the JSON object properties from the `columnSelections` and the `joinedTables`
+    const jsonObjectProperties: string[] = this.columnSelections.flatMap(
       (columnSelection: ColumnSelection) => {
         if (Array.isArray(columnSelection)) {
           // JSON key name provided
           if (columnSelection.length === 2) {
+            selectedColumns.push(`${tableName}.${columnSelection[0]}`);
             return [
               `"${columnSelection[1]}"`,
               `${tableName}.${columnSelection[0]}`,
             ];
           }
-          // Calculated field
+          // Calculated field (TODO they do not work currently for calculations that access a column which is not selected)
           return [`"${columnSelection[1]}"`, `(${columnSelection[2]})`];
         }
         // Only column name provided
+        selectedColumns.push(`${tableName}.${columnSelection}`);
         return [`"${columnSelection}"`, `${tableName}.${columnSelection}`];
       }
     );
@@ -88,7 +96,7 @@ class JsonQueryNode {
           joinedTableJsonKey = joinedTable.tableSelection;
         }
 
-        assembledColumnSelections.push(
+        jsonObjectProperties.push(
           `"${joinedTableJsonKey}"`,
           `${joinedTableName}._json`
         );
@@ -102,9 +110,11 @@ class JsonQueryNode {
 
     if (this.type === QueryNodeType.Object) {
       // Building a scalar JSON object query
-      return `SELECT JSON_OBJECT(${assembledColumnSelections.join(
+      return `SELECT JSON_OBJECT(${jsonObjectProperties.join(
         ", "
-      )}) as _json FROM (SELECT * FROM ${tableName} WHERE ${
+      )}) as _json FROM (SELECT ${selectedColumns.join(
+        ", "
+      )} FROM ${tableName} WHERE ${
         this.where
       }) AS ${tableName} ${descendantsOutput.join(" ")}`;
     } else {
@@ -136,9 +146,11 @@ class JsonQueryNode {
 
       // Need to cast the second COALESCE parameter due to implicit type conversion
       // https://stackoverflow.com/a/20678157/11858359
-      return `SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT(${assembledColumnSelections.join(
+      return `SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT(${jsonObjectProperties.join(
         ", "
-      )})), CAST("[]" AS JSON)) as _json FROM (SELECT * FROM ${tables} ${where} ${orderBy} ${limit}) AS ${tableName} ${descendantsOutput.join(
+      )})), CAST("[]" AS JSON)) as _json FROM (SELECT ${selectedColumns.join(
+        ", "
+      )} FROM ${tables} ${where} ${orderBy} ${limit}) AS ${tableName} ${descendantsOutput.join(
         " "
       )}`;
     }

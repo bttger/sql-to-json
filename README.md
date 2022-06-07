@@ -39,6 +39,8 @@ $ npm install sql-to-json
 
 
 ## Todo
+- [ ] Allow selection junction table columns when joining a many-to-many relation
+- [ ] Fix calculated fields for columns that are not selected
 - [ ] Write docstrings
 - [ ] Write benchmarks
 - [ ] Write tests
