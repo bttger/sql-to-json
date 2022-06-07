@@ -19,13 +19,18 @@ The second option tries to solve this problem by making an extra query for each 
 - [x] Calculated fields that can use all built-in functions (even window functions)
 - [ ] GROUP BY and HAVING conditions (See the [RFC](./rfc/group-by-and-having-support.md))
 
+## Use cases
+- Basically all read transactions where you need to select columns of more than one table and want to map rows to objects. If you need to get data from one table only, just do a simple SELECT query.
+- In case of findtech.jobs, clients can ask for a job posting and the related data like the employer, office addresses, languages, technologies, professional area, benefits, and currency information. We save many database requests by aggregating the object in the database and don't need to worry about mapping the data to an object.
+- You like simplicity and to work with the raw database client instead of an ORM tool.
+
 ## Drawbacks
 The database response contains only a single column (with column type JSON). You won't get type information about the columns that you have queried since they will be mapped to JSON. Modern DBMS support many more types than what JSON specifies. Thus, some columns will be converted to strings (e.g. dates).
 
 ## Supported Databases
 - [x] MySQL (>=8.0.14; MariaDB is not supported due to lack of lateral joins)
-- [ ] PostgreSQL
-- [ ] CockroachDB
+- [ ] PostgreSQL (>=10)
+- [ ] CockroachDB (>=21.2.0)
 
 ## Install
 
