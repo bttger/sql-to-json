@@ -16,7 +16,7 @@ The second option tries to solve this problem by making an extra query for each 
 - [x] WHERE conditions
 - [x] ORDER BY of array items
 - [x] Pagination via limit and offset parameters
-- [x] Calculated fields that can use all built-in functions (even window functions)
+- [ ] Computed fields that can use all built-in functions including window functions (I had to remove this feature again because it was error prone due to aliases and ambiguous column names. Though, this is on the roadmap.)
 - [ ] GROUP BY and HAVING conditions (See the [RFC](./rfc/group-by-and-having-support.md))
 
 ## Use cases
@@ -46,9 +46,7 @@ $ npm install sql-to-json
 
 
 ## Todo
-- [ ] Allow selection junction table columns when joining a many-to-many relation
-- [ ] Fix calculated fields for columns that are not selected
-- [ ] do i really need a lateral join inside of unique object? maybe i need it bc the object can lie within an array
+- [ ] do i always need a lateral join inside of unique object? maybe i need it bc the object can lie within an array
 - [ ] Write docstrings
 - [ ] Write benchmarks
 - [ ] Write tests

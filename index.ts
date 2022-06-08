@@ -1,8 +1,4 @@
 type TableName = string;
-/**
- * You may reference a column via the table name to prevent ambiguous
- * column names. `<table>.<column>`
- */
 type ColumnReference = string;
 type SqlConditions = string;
 type JsonKeyName = string;
@@ -16,14 +12,13 @@ enum QueryNodeType {
 interface QueryOptions {
   where?: SqlConditions;
   /**
-   * For example, you can add a **junction table** here if you want to
-   * query a table of a many-to-many relation.
+   * Add a **junction table** of a many-to-many relation.
    *
    * Add columns of these joined tables to the `ColumnSelection` by
-   * prefixing the column with the table like
+   * prefixing the column with the table like:
    * `<tableName>.<columnName>`.
    */
-  join?: TableName | TableName[];
+  join?: TableName;
   limit?: number;
   offset?: number;
   orderBy?: OrderBy;
@@ -38,7 +33,7 @@ type TableSelection = TableName | TableSelectionOptions;
 
 interface ColumnSelectionOptions {
   /**
-   * Specify the column you want to retrieve data from.
+   * Specify the column you want to write to the JSON object.
    *
    * You may reference a column via the table name to prevent ambiguous
    * column names or to select a column of a junction table.
@@ -52,21 +47,6 @@ interface ColumnSelectionOptions {
    * Set the name of the JSON object key. `{ "jsonKey": "someValue" }`
    */
   jsonKey: JsonKeyName;
-  /**
-   * Within the calculation, you must reference columns with the
-   * following alias pattern: `<table>_<column>`.
-   *
-   * Can use all built-in database functions, including window functions.
-   */
-  calculation?: string;
-  /**
-   * Specify all columns that your calculated field references and
-   * which are not explicitly selected.
-   *
-   * You may reference columns via the table name to prevent ambiguous
-   * column names in calculated fields. `["<table>.<column>"]`
-   */
-  referencedColumns?: ColumnReference[];
 }
 
 type ColumnSelection = ColumnReference | ColumnSelectionOptions;
@@ -78,27 +58,31 @@ class JsonQueryNode {
     private columnSelections: ColumnSelection[],
     private joinedTables?: JsonQueryNode[],
     private where?: SqlConditions,
-    private join?: TableName | TableName[],
+    private join?: TableName,
     private limit?: number,
     private offset?: number,
     private orderBy?: OrderBy | OrderBy[]
   ) {}
 
   public compile(): string {
-    const table: string = Array.isArray(this.tableSelection)
-      ? this.tableSelection[0]
-      : this.tableSelection;
+    let table: string;
+    if (typeof this.tableSelection === "string") {
+      table = this.tableSelection;
+    } else {
+      table = this.tableSelection.table;
+    }
 
     /**
-     * The columns that need to be selected in the subquery `["<table>.<column>"]`
+     * Additional columns that need to be selected in the subquery and that must be
+     * aliased to prevent ambiguous column names.
      */
-    const selectedColumns: string[] = [];
+    const junctionTableSelections: string[] = [];
     /**
      * The assembled JSON object properties from `columnSelections` and `joinedTables`
      */
     const jsonObjectProperties: string[] = [];
 
-    const getColumnAndRelatedTable = (
+    const getColumnAndReferencedTable = (
       columnReference: ColumnReference
     ): [string, string] => {
       const columnSelectionSplit = columnReference.split(".");
@@ -112,39 +96,30 @@ class JsonQueryNode {
       return [column, relatedTable];
     };
 
-    const addSelectedColumn = (
+    const addColumnSelection = (
       columnReference: ColumnReference,
       jsonKey: JsonKeyName
     ) => {
-      const [column, relatedTable] = getColumnAndRelatedTable(columnReference);
-      selectedColumns.push(
-        `${relatedTable}.${column} AS ${relatedTable}_${column}`
-      );
-      jsonObjectProperties.push(`"${jsonKey}"`, `${relatedTable}_${column}`);
+      const [column, referencedTable] =
+        getColumnAndReferencedTable(columnReference);
+      if (referencedTable !== table) {
+        junctionTableSelections.push(
+          `${referencedTable}.${column} AS ${referencedTable}_${column}`
+        );
+        jsonObjectProperties.push(
+          `"${jsonKey}"`,
+          `${referencedTable}_${column}`
+        );
+      } else {
+        jsonObjectProperties.push(`"${jsonKey}"`, `${table}.${column}`);
+      }
     };
 
     this.columnSelections.forEach((columnSelection: ColumnSelection) => {
       if (typeof columnSelection === "string") {
-        addSelectedColumn(columnSelection, columnSelection);
+        addColumnSelection(columnSelection, columnSelection);
       } else if (columnSelection.column && columnSelection.jsonKey) {
-        addSelectedColumn(columnSelection.column, columnSelection.jsonKey);
-      } else if (columnSelection.calculation && columnSelection.jsonKey) {
-        if (Array.isArray(columnSelection.referencedColumns)) {
-          columnSelection.referencedColumns.forEach(
-            (columnReference: ColumnReference) => {
-              const [column, relatedTable] =
-                getColumnAndRelatedTable(columnReference);
-              selectedColumns.push(
-                `${relatedTable}.${column} AS ${relatedTable}_${column}`
-              );
-            }
-          );
-        }
-
-        jsonObjectProperties.push(
-          `"${columnSelection.jsonKey}"`,
-          `${columnSelection.calculation}`
-        );
+        addColumnSelection(columnSelection.column, columnSelection.jsonKey);
       } else {
         throw new Error(
           `Could not extract a column selection for ${JSON.stringify(
@@ -185,21 +160,12 @@ class JsonQueryNode {
       // Building a scalar JSON object query
       return `SELECT JSON_OBJECT(${jsonObjectProperties.join(
         ", "
-      )}) as _json FROM (SELECT ${selectedColumns.join(
-        ", "
-      )} FROM ${table} WHERE ${
+      )}) as _json FROM (SELECT * FROM ${table} WHERE ${
         this.where
       }) AS ${table} ${descendantsOutput.join(" ")}`;
     } else {
       // Building a scalar JSON array query
-      let tables = table;
-      if (this.join) {
-        if (Array.isArray(this.join)) {
-          tables = [table, ...this.join].join(", ");
-        } else {
-          tables = table + ", " + this.join;
-        }
-      }
+      const tables = this.join ? table + ", " + this.join : table;
 
       const where = this.where ? `WHERE ${this.where}` : "";
       const limit = this.limit
@@ -221,9 +187,11 @@ class JsonQueryNode {
       // https://stackoverflow.com/a/20678157/11858359
       return `SELECT COALESCE(JSON_ARRAYAGG(JSON_OBJECT(${jsonObjectProperties.join(
         ", "
-      )})), CAST("[]" AS JSON)) as _json FROM (SELECT ${selectedColumns.join(
-        ", "
-      )} FROM ${tables} ${where} ${orderBy} ${limit}) AS ${table} ${descendantsOutput.join(
+      )})), CAST("[]" AS JSON)) as _json FROM (SELECT ${table}.* ${
+        junctionTableSelections.length
+          ? ", " + junctionTableSelections.join(", ")
+          : ""
+      } FROM ${tables} ${where} ${orderBy} ${limit}) AS ${table} ${descendantsOutput.join(
         " "
       )}`;
     }
@@ -234,9 +202,9 @@ class JsonQueryNode {
  * Generate a query to find a single row and map it to a JSON object. When
  * run, the query returns a scalar value - the JSON object string.
  *
- * This function always requires a WHERE condition. If more than one rows
- * were find, this query returns JSON objects spread over many rows. This
- * leads to an error if you nest this function's output in another query.
+ * This function always requires a WHERE condition. If the query finds more
+ * than one row, it returns JSON objects spread over many rows. This
+ * leads to an error if this function's output is nested in another query.
  */
 export function findUnique(
   table: TableSelection,
