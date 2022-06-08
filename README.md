@@ -24,7 +24,7 @@ The second option tries to solve this problem by making an extra query for each 
 - In case of findtech.jobs, clients can ask for a job posting and the related data like the employer, office addresses, languages, technologies, professional area, benefits, and currency information. We save many database requests by aggregating the object in the database and don't need to worry about mapping the data to an object.
 - You like simplicity and to work with the raw database client instead of an ORM tool.
 
-## Drawbacks
+## Limitations and drawbacks
 The database response contains only a single column (with column type JSON). You won't get type information about the columns that you have queried since they will be mapped to JSON. Modern DBMS support many more types than what JSON specifies. Thus, some columns will be converted to strings (e.g. dates).
 
 Another point to consider is that mapping the data on the database can lead to a higher load on the database per client request. But this depends on the type of query. Nesting two `findMany` queries involves derived subqueries with lateral joins which are hard for the database, too. On the other hand, queries that retrieve a unique object with one-to-one, one-to-many, and many-to-many relations mapped are very efficient. The benchmarks show that the overall system load is lower than the ORM approach if the database and the API server are running on the same machine.
@@ -48,7 +48,6 @@ $ npm install sql-to-json
 ## Todo
 - [ ] Allow selection junction table columns when joining a many-to-many relation
 - [ ] Fix calculated fields for columns that are not selected
-- [ ] orderby as record not as array
 - [ ] do i really need a lateral join inside of unique object? maybe i need it bc the object can lie within an array
 - [ ] Write docstrings
 - [ ] Write benchmarks

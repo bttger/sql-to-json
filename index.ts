@@ -1,8 +1,12 @@
 type TableName = string;
-type ColumnName = string;
+/**
+ * You may reference a column via the table name to prevent ambiguous
+ * column names. `<table>.<column>`
+ */
+type ColumnReference = string;
 type SqlConditions = string;
 type JsonKeyName = string;
-type OrderBy = Record<ColumnName, "ASC" | "DESC">;
+type OrderBy = Record<ColumnReference, "ASC" | "DESC">;
 
 enum QueryNodeType {
   Array,
@@ -12,8 +16,12 @@ enum QueryNodeType {
 interface QueryOptions {
   where?: SqlConditions;
   /**
-   * For example, you can add a junction table here if you want to query a
-   * table of a many-to-many relation.
+   * For example, you can add a **junction table** here if you want to
+   * query a table of a many-to-many relation.
+   *
+   * Add columns of these joined tables to the `ColumnSelection` by
+   * prefixing the column with the table like
+   * `<tableName>.<columnName>`.
    */
   join?: TableName | TableName[];
   limit?: number;
@@ -21,34 +29,47 @@ interface QueryOptions {
   orderBy?: OrderBy;
 }
 
-interface TableSelectionConfig {
+interface TableSelectionOptions {
   table: TableName;
   jsonKey: JsonKeyName;
 }
 
-type TableSelection = TableName | TableSelectionConfig;
+type TableSelection = TableName | TableSelectionOptions;
 
-interface ColumnSelectionConfig {
-  column: ColumnName;
-  jsonKey: JsonKeyName;
-}
-
-interface CalculatedFieldConfig {
-  jsonKey: JsonKeyName;
+interface ColumnSelectionOptions {
   /**
-   * Should reference columns via the table name to prevent ambiguous column names.
+   * Specify the column you want to retrieve data from.
+   *
+   * You may reference a column via the table name to prevent ambiguous
+   * column names or to select a column of a junction table.
+   * `<table>.<column>`
+   *
+   * For calculated fields, use the `calculation`, `jsonKey`,
+   * and `referencedColumns` properties instead.
    */
-  referencedColumns: ColumnName[];
+  column?: ColumnReference;
   /**
+   * Set the name of the JSON object key. `{ "jsonKey": "someValue" }`
+   */
+  jsonKey: JsonKeyName;
+  /**
+   * Within the calculation, you must reference columns with the
+   * following alias pattern: `<table>_<column>`.
+   *
    * Can use all built-in database functions, including window functions.
    */
-  calculation: string;
+  calculation?: string;
+  /**
+   * Specify all columns that your calculated field references and
+   * which are not explicitly selected.
+   *
+   * You may reference columns via the table name to prevent ambiguous
+   * column names in calculated fields. `["<table>.<column>"]`
+   */
+  referencedColumns?: ColumnReference[];
 }
 
-type ColumnSelection =
-  | ColumnName
-  | ColumnSelectionConfig
-  | CalculatedFieldConfig;
+type ColumnSelection = ColumnReference | ColumnSelectionOptions;
 
 class JsonQueryNode {
   constructor(
@@ -64,33 +85,74 @@ class JsonQueryNode {
   ) {}
 
   public compile(): string {
-    const tableName: string = Array.isArray(this.tableSelection)
+    const table: string = Array.isArray(this.tableSelection)
       ? this.tableSelection[0]
       : this.tableSelection;
 
-    // ["<tableName>.<column>"]
+    /**
+     * The columns that need to be selected in the subquery `["<table>.<column>"]`
+     */
     const selectedColumns: string[] = [];
+    /**
+     * The assembled JSON object properties from `columnSelections` and `joinedTables`
+     */
+    const jsonObjectProperties: string[] = [];
 
-    // Assemble the JSON object properties from the `columnSelections` and the `joinedTables`
-    const jsonObjectProperties: string[] = this.columnSelections.flatMap(
-      (columnSelection: ColumnSelection) => {
-        if (Array.isArray(columnSelection)) {
-          // JSON key name provided
-          if (columnSelection.length === 2) {
-            selectedColumns.push(`${tableName}.${columnSelection[0]}`);
-            return [
-              `"${columnSelection[1]}"`,
-              `${tableName}.${columnSelection[0]}`,
-            ];
-          }
-          // Calculated field (TODO they do not work currently for calculations that access a column which is not selected)
-          return [`"${columnSelection[1]}"`, `(${columnSelection[2]})`];
+    const getColumnAndRelatedTable = (
+      columnReference: ColumnReference
+    ): [string, string] => {
+      const columnSelectionSplit = columnReference.split(".");
+      const column =
+        columnSelectionSplit.length === 2
+          ? columnSelectionSplit[1]
+          : columnReference;
+      const relatedTable =
+        columnSelectionSplit.length === 2 ? columnSelectionSplit[0] : table;
+
+      return [column, relatedTable];
+    };
+
+    const addSelectedColumn = (
+      columnReference: ColumnReference,
+      jsonKey: JsonKeyName
+    ) => {
+      const [column, relatedTable] = getColumnAndRelatedTable(columnReference);
+      selectedColumns.push(
+        `${relatedTable}.${column} AS ${relatedTable}_${column}`
+      );
+      jsonObjectProperties.push(`"${jsonKey}"`, `${relatedTable}_${column}`);
+    };
+
+    this.columnSelections.forEach((columnSelection: ColumnSelection) => {
+      if (typeof columnSelection === "string") {
+        addSelectedColumn(columnSelection, columnSelection);
+      } else if (columnSelection.column && columnSelection.jsonKey) {
+        addSelectedColumn(columnSelection.column, columnSelection.jsonKey);
+      } else if (columnSelection.calculation && columnSelection.jsonKey) {
+        if (Array.isArray(columnSelection.referencedColumns)) {
+          columnSelection.referencedColumns.forEach(
+            (columnReference: ColumnReference) => {
+              const [column, relatedTable] =
+                getColumnAndRelatedTable(columnReference);
+              selectedColumns.push(
+                `${relatedTable}.${column} AS ${relatedTable}_${column}`
+              );
+            }
+          );
         }
-        // Only column name provided
-        selectedColumns.push(`${tableName}.${columnSelection}`);
-        return [`"${columnSelection}"`, `${tableName}.${columnSelection}`];
+
+        jsonObjectProperties.push(
+          `"${columnSelection.jsonKey}"`,
+          `${columnSelection.calculation}`
+        );
+      } else {
+        throw new Error(
+          `Could not extract a column selection for ${JSON.stringify(
+            columnSelection
+          )}. Please check your ColumnSelectionOptions.`
+        );
       }
-    );
+    });
 
     // Recursively compile all descendants and map them to lateral left joins
     const descendantsOutput: string[] = [];
@@ -99,12 +161,12 @@ class JsonQueryNode {
         let joinedTableName: string;
         let joinedTableJsonKey: string;
 
-        if (Array.isArray(joinedTable.tableSelection)) {
-          joinedTableName = joinedTable.tableSelection[0];
-          joinedTableJsonKey = joinedTable.tableSelection[1];
-        } else {
+        if (typeof joinedTable.tableSelection === "string") {
           joinedTableName = joinedTable.tableSelection;
           joinedTableJsonKey = joinedTable.tableSelection;
+        } else {
+          joinedTableName = joinedTable.tableSelection.table;
+          joinedTableJsonKey = joinedTable.tableSelection.jsonKey;
         }
 
         jsonObjectProperties.push(
@@ -125,17 +187,17 @@ class JsonQueryNode {
         ", "
       )}) as _json FROM (SELECT ${selectedColumns.join(
         ", "
-      )} FROM ${tableName} WHERE ${
+      )} FROM ${table} WHERE ${
         this.where
-      }) AS ${tableName} ${descendantsOutput.join(" ")}`;
+      }) AS ${table} ${descendantsOutput.join(" ")}`;
     } else {
       // Building a scalar JSON array query
-      let tables = tableName;
+      let tables = table;
       if (this.join) {
         if (Array.isArray(this.join)) {
-          tables = [...this.join, tableName].join(", ");
+          tables = [table, ...this.join].join(", ");
         } else {
-          tables = this.join + ", " + tableName;
+          tables = table + ", " + this.join;
         }
       }
 
@@ -161,7 +223,7 @@ class JsonQueryNode {
         ", "
       )})), CAST("[]" AS JSON)) as _json FROM (SELECT ${selectedColumns.join(
         ", "
-      )} FROM ${tables} ${where} ${orderBy} ${limit}) AS ${tableName} ${descendantsOutput.join(
+      )} FROM ${tables} ${where} ${orderBy} ${limit}) AS ${table} ${descendantsOutput.join(
         " "
       )}`;
     }
@@ -169,9 +231,12 @@ class JsonQueryNode {
 }
 
 /**
- * Braucht immer where condition (wenn sie nicht nur auf eine einzige row
- * applied, dann werden mehrere rows zurückgegeben welche alle jeweils ein
- * JSON object string darstellen) => kann die query failen wenns ne nested node ist
+ * Generate a query to find a single row and map it to a JSON object. When
+ * run, the query returns a scalar value - the JSON object string.
+ *
+ * This function always requires a WHERE condition. If more than one rows
+ * were find, this query returns JSON objects spread over many rows. This
+ * leads to an error if you nest this function's output in another query.
  */
 export function findUnique(
   table: TableSelection,
@@ -183,14 +248,24 @@ export function findUnique(
 }
 
 /**
- * The `where` parameter is used for joining the related rows (like in the
- * `ON` condition) and for arbitrary `WHERE` conditions.
+ * Generate a query to find many rows, map each row to a JSON object, and
+ * aggregate all objects to a JSON array. When run, the query returns
+ * a scalar value - the JSON array string.
  */
 export function findMany(
   table: TableSelection,
   select: ColumnSelection[],
   join?: JsonQueryNode[]
 ): JsonQueryNode;
+/**
+ * Generate a query to find many rows, map each row to a JSON object, and
+ * aggregate all objects to a JSON array. When run, the query returns
+ * a scalar value - the JSON array string.
+ *
+ * The `where` parameter in the QueryOptions is used for joining
+ * related rows (like in the `ON` condition) and for arbitrary
+ * `WHERE` conditions.
+ */
 export function findMany(
   table: TableSelection,
   select: ColumnSelection[],
@@ -221,5 +296,3 @@ export function findMany(
     optionsOrJoin?.orderBy
   );
 }
-
-findMany("dfks", [{ column: "df", jsonKey: "", calculation: "h" }]);
