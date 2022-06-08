@@ -12,7 +12,8 @@ enum QueryNodeType {
 interface QueryOptions {
   where?: SqlConditions;
   /**
-   * Add a **junction table** of a many-to-many relation.
+   * Add a **junction table** of a many-to-many relation or some table
+   * that is needed in the WHERE condition.
    *
    * Add columns of these joined tables to the `ColumnSelection` by
    * prefixing the column with the table like:
@@ -172,15 +173,11 @@ class JsonQueryNode {
         ? `LIMIT ${this.offset ? this.offset + "," : ""} ${this.limit}`
         : "";
 
-      let orderBy = "";
-      if (this.orderBy) {
-        if (Array.isArray(this.orderBy)) {
-          orderBy = this.orderBy
-            .map((v) => `${v.column} ${v.order}`)
-            .join(", ");
-        } else {
-          orderBy = `ORDER BY ${this.orderBy.column} ${this.orderBy.order}`;
-        }
+      const orderBy: string[] = [];
+      if (typeof this.orderBy === "object") {
+        Object.entries(this.orderBy).forEach(([column, order]) => {
+          orderBy.push(`${column} ${order}`);
+        });
       }
 
       // Need to cast the second COALESCE parameter due to implicit type conversion
@@ -191,9 +188,9 @@ class JsonQueryNode {
         junctionTableSelections.length
           ? ", " + junctionTableSelections.join(", ")
           : ""
-      } FROM ${tables} ${where} ${orderBy} ${limit}) AS ${table} ${descendantsOutput.join(
-        " "
-      )}`;
+      } FROM ${tables} ${where} ${
+        orderBy.length ? "ORDER BY " + orderBy.join(", ") : ""
+      } ${limit}) AS ${table} ${descendantsOutput.join(" ")}`;
     }
   }
 }

@@ -27,10 +27,10 @@ The second option tries to solve this problem by making an extra query for each 
 ## Limitations and drawbacks
 The database response contains only a single column (with column type JSON). You won't get type information about the columns that you have queried since they will be mapped to JSON. Modern DBMS support many more types than what JSON specifies. Thus, some columns will be converted to strings (e.g. dates).
 
-Another point to consider is that mapping the data on the database can lead to a higher load on the database per client request. But this depends on the type of query. Nesting two `findMany` queries involves derived subqueries with lateral joins which are hard for the database, too. On the other hand, queries that retrieve a unique object with one-to-one, one-to-many, and many-to-many relations mapped are very efficient. The benchmarks show that the overall system load is lower than the ORM approach if the database and the API server are running on the same machine.
+Another point to consider is that mapping the data on the database can lead to a higher load on the database per client request. But this depends on the type of query. Nesting multiple `findMany` queries involves derived subqueries with lateral joins which cause lots of iterative subqueries on the database. On the other hand, queries that retrieve a unique object with one-to-one, one-to-many, and many-to-many relations mapped are very efficient. The benchmarks show that the overall system load is lower than the ORM approach if the database and the API server are running on the same machine.
 
 ## Supported Databases
-- [x] MySQL (>=8.0.14; MariaDB is not supported due to lack of lateral joins)
+- [x] MySQL (>=8.0.14; OrderBy not supported; MariaDB not supported due to lack of lateral joins)
 - [ ] PostgreSQL (>=10)
 - [ ] CockroachDB (>=21.2.0)
 
@@ -46,6 +46,7 @@ $ npm install sql-to-json
 
 
 ## Todo
+- [ ] join option must allow array
 - [ ] do i always need a lateral join inside of unique object? maybe i need it bc the object can lie within an array
 - [ ] Write docstrings
 - [ ] Write benchmarks
