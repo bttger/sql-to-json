@@ -1,3 +1,7 @@
+> PLEASE NOTE:
+> 
+> This repository is a fork of the original repository from the [findtechjobs](https://github.com/findtechjobs) organization. We unpublished the original version because we have major plans to ditch the MySQL support and only support PostgreSQL with more and better integrated features. One of the planned features is automatic database schema introspection, so that users don't have to write the relational conditions anymore. Stay updated by following the findtechjobs organization.
+
 # SQL-to-JSON
 
 Usually, we have two options when we want to retrieve data from a relational database. The first option is to do a single query that joins all the tables we need data from, and then mapping the rows to objects. But this is highly inefficient when you need data from tables related in a one-to-many or many-to-many fashion. Let's assume a client asks for the company data including their benefits and ads. We could execute a query like `SELECT * FROM company LEFT JOIN benefits ON .. LEFT JOIN ads ON .. WHERE company.id = 'someId';` to return that data. Assuming this company has 10 benefits and 10 ads, the database returns 100 rows for the shown query. Of course these rows contain **lots of redundant data** and the query essentially builds a **Cartesian product of all joined tables**. Additionally, the overhead of mapping all these rows can be huge, and the reason ORM tools are so slow for queries with joined tables.
@@ -47,9 +51,8 @@ $ npm install sql-to-json
 
 ## Todo
 - [ ] join option must allow array
-- [ ] do i always need a lateral join inside of unique object? maybe i need it bc the object can lie within an array
-- [ ] Write docstrings
-- [ ] Write benchmarks
+- [x] Write docstrings
+- [x] Write benchmarks
 - [ ] Write tests
 - [ ] Write examples (also with prepared statements/parameters and the compiled output to show how it works)
 - [ ] Publish to npm
