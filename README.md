@@ -1,6 +1,8 @@
 > PLEASE NOTE:
 > 
-> This repository is a fork of the original repository from the [findtechjobs](https://github.com/findtechjobs) organization. We unpublished the original version because we have major plans to ditch the MySQL support and only support PostgreSQL with more and better integrated features. One of the planned features is automatic database schema introspection, so that users don't have to write the relational conditions anymore. Stay updated by following the findtechjobs organization.
+> This repository is a fork of the original repository from the [findtechjobs](https://github.com/findtechjobs) organization. We unpublished the original version because we have major plans to ditch the MySQL support and only support PostgreSQL with more and better integrated features. One of the planned features is automatic database schema introspection, so that users don't have to write the relational conditions anymore.
+> 
+> Since these updates would drastically change the API, it's better for us to unpublish it and work out a new API. Stay updated by following the findtechjobs organization.
 
 # SQL-to-JSON
 
